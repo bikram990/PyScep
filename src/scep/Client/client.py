@@ -6,7 +6,7 @@ from asn1crypto.cms import ContentInfo, IssuerAndSerialNumber
 from .builders import PKIMessageBuilder, Signer
 from .certificate import Certificate
 from .crl import RevocationList
-from .cryptoutils import digest_for_data
+from .cryptoutils import digest_for_data, hex_digest_for_data
 from .envelope import PKCSPKIEnvelopeBuilder
 from .responses import EnrollmentStatus, Capabilities, CACertificates
 from .message import SCEPMessage
@@ -103,8 +103,7 @@ class Client:
         cacaps = self.get_ca_capabilities(identifier=identifier)
         ca_certs = self.get_ca_certs(identifier=identifier)
         envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), cacaps.strongest_cipher())
-        digest = digest_for_data(data=csr.public_key.to_der(), algorithm='sha1')
-        transaction_id = digest.encode(encoding='utf-8').hex()
+        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm='sha1')
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.PKCSReq, cacaps=cacaps, ca_certs=ca_certs, transaction_id=transaction_id)
 
     def _pki_operation(self, identity, identity_private_key, envelope, message_type, cacaps, ca_certs, transaction_id=None):

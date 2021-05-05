@@ -1,3 +1,5 @@
+import hashlib
+
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES, AES
@@ -22,6 +24,15 @@ def digest_for_data(algorithm, data):
     digest = hashes.Hash(digest_function(), backend=default_backend())
     digest.update(data)
     return digest.finalize()
+
+def hex_digest_for_data(algorithm, data):
+    digest_function = {
+        'sha1': hashlib.sha1,
+        'sha256': hashlib.sha256,
+        'sha512': hashlib.sha512,
+        'md5': hashlib.md5
+    }[algorithm]
+    return digest_function(data).hexdigest()
 
 
 def padding_for_type(padding_type, hash_algo=hashes.SHA256, mgf=padding.MGF1, label=None):
