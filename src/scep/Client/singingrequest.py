@@ -239,7 +239,7 @@ class SigningRequest:
 
     @property
     def public_key(self):
-        return PublicKey(public_key=self._csr.public_key)
+        return PublicKey(public_key=self._csr[u'certification_request_info'][u'subject_pk_info'])
 
     def to_der(self):
         return self._csr.dump()
