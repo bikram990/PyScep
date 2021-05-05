@@ -21,7 +21,7 @@ Note: this will generate a new RSA Key pair automatically, you can optionally su
 #### Load an Existing Certificate
 ````
 identity, identity_private_key = Client.Certificate.from_p12_file(
-    pem_file='/path/to/cert.p12', 
+    p12_file='/path/to/cert.p12', 
     password='password'
 )
 ````

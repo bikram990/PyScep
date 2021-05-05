@@ -4,10 +4,20 @@ from oscrypto import asymmetric, keys
 from cryptography import x509 as crypto_x509
 from cryptography.hazmat.backends import default_backend
 
+from .privatekey import PrivateKey
 from .publickey import PublicKey
 
 
 class Certificate:
+    @classmethod
+    def from_p12_file(cls, p12_file, password=None):
+        with open(p12_file, 'rb') as file_handle:
+            private_key_info, certificate, chain = keys.parse_pkcs12(file_handle.read(), password=password)
+            cert = cls(certificate=certificate)
+            private_key = PrivateKey(private_key=private_key_info)
+
+            return cert, private_key
+
     @classmethod
     def from_pem_file(cls, pem_file):
         with open(pem_file, 'rb') as pem_file_handle:
