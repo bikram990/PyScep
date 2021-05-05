@@ -9,6 +9,7 @@ from .crl import RevocationList
 from .enums import CACaps
 from .responses import EnrollmentStatus, Capabilities, CACertificates
 from .singingrequest import SigningRequest, ScepCSRBuilder
+from .asn1 import PKIStatus, FailInfo
 
 __all__ = [
     "Client",
@@ -21,5 +22,7 @@ __all__ = [
     "Capabilities",
     "CACertificates",
     "ScepCSRBuilder",
-    "SigningRequest"
+    "SigningRequest",
+    "PKIStatus",
+    "FailInfo"
 ]
