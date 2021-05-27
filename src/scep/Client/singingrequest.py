@@ -148,7 +148,7 @@ class SigningRequest:
         )
         builder.key_usage = key_usage #[u'digital_signature', u'key_encipherment']
         if password:
-            builder.password = unicode(password)
+            builder.password = password
 
         request = builder.build(private_key.to_asn1_private_key())
 

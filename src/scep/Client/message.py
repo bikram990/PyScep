@@ -1,7 +1,7 @@
 from base64 import b64encode
 from asn1crypto.cms import CMSAttribute, ContentInfo, IssuerAndSerialNumber
 
-import asn1
+from .asn1 import SCEPCMSAttributeType
 
 from .cryptoutils import digest_for_data, decrypt
 
@@ -9,12 +9,14 @@ from .enums import MessageType, PKIStatus
 from .certificate import Certificate
 
 CMSAttribute._fields = [
-    ('type', asn1.SCEPCMSAttributeType),
+    ('type', SCEPCMSAttributeType),
     ('values', None),
 ]
 
+
 def get_digest_method(name='sha1'):
     pass
+
 
 class SCEPMessage(object):
 
@@ -78,7 +80,7 @@ class SCEPMessage(object):
                 # *     attributes containing a single attribute value in its set.
                 # */
                 for signed_attr in signer_info['signed_attrs']:
-                    name = asn1.SCEPCMSAttributeType.map(unicode(signed_attr['type'].native))
+                    name = asn1.SCEPCMSAttributeType.map(signed_attr['type'].native)
 
                     if name == 'transaction_id':
                         msg._transaction_id = signed_attr['values'][0].native

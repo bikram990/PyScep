@@ -242,7 +242,7 @@ class PKIMessageBuilder(object):
         """
         attr = CMSAttribute({
             'type': u'message_type',
-            'values': [PrintableString(unicode(message_type.value))],
+            'values': [PrintableString(message_type.value)],
         })
         self._cms_attributes.append(attr)
 
@@ -349,9 +349,9 @@ class PKIMessageBuilder(object):
                 <https://datatracker.ietf.org/doc/draft-gutmann-scep/?include_text=1>`_.
         """
         if isinstance(trans_id, str):
-            trans_id = PrintableString(unicode(trans_id))
+            trans_id = PrintableString(trans_id)
         elif trans_id is None:
-            trans_id = PrintableString(unicode(str(uuid4())))
+            trans_id = PrintableString(str(uuid4()))
 
         attr = CMSAttribute({
             'type': u'transaction_id',
@@ -404,7 +404,7 @@ class PKIMessageBuilder(object):
 
         certificates = self._certificates
 
-        da_id = DigestAlgorithmId(unicode(digest_algorithm))
+        da_id = DigestAlgorithmId(digest_algorithm)
         da = DigestAlgorithm({u'algorithm': da_id})
         das = DigestAlgorithms([da])
 

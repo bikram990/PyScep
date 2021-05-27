@@ -4,7 +4,7 @@
 
 __author__ = 'Bikramjeet Singh'
 __license__ = 'MIT License'
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 __package__ = 'Scep'
 __summary__ = 'A Python SCEP client and server'
 
