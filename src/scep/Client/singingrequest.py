@@ -22,14 +22,6 @@ class ScepCSRBuilder(CSRBuilder):
 
     @password.setter
     def password(self, value):
-        if not isinstance(value, unicode) and value is not None:
-            raise TypeError(_pretty_message(
-                '''
-                password must be an instance of unicode, not %s
-                ''',
-                _type_name(value)
-            ))
-
         if value == '' or value is None:
             self._password = None
         else:
@@ -151,9 +143,6 @@ class SigningRequest:
             builder.password = password
 
         request = builder.build(private_key.to_asn1_private_key())
-
-        # with open('/Volumes/DataDisk/CorporateSources/portal/will_bond.csr', 'wb') as f:
-        #     f.write(csr.dump())
 
         return SigningRequest(request=request), private_key
 

@@ -34,11 +34,12 @@ class PrivateKey:
         else:
             self._private_key = private_key
 
+        self._oscrypto_private_key = asymmetric.load_private_key(source=self._private_key)
         self._crypto_private_key = serialization.load_der_private_key(data=self.to_der(), backend=default_backend(), password=None)
 
     @property
     def public_key(self):
-        return PublicKey(public_key=self._private_key.public_key_info)
+        return PublicKey(public_key=self._oscrypto_private_key.public_key.asn1)
 
     def to_der(self, password=None):
         return asymmetric.dump_private_key(self._private_key, passphrase=password, encoding='der')

@@ -80,7 +80,7 @@ class SCEPMessage(object):
                 # *     attributes containing a single attribute value in its set.
                 # */
                 for signed_attr in signer_info['signed_attrs']:
-                    name = asn1.SCEPCMSAttributeType.map(signed_attr['type'].native)
+                    name = SCEPCMSAttributeType.map(signed_attr['type'].native)
 
                     if name == 'transaction_id':
                         msg._transaction_id = signed_attr['values'][0].native
@@ -200,7 +200,8 @@ class SCEPMessage(object):
         encryption_algo = recipient_info.chosen['key_encryption_algorithm'].native
         encrypted_key = recipient_info.chosen['encrypted_key'].native
 
-        assert encryption_algo['algorithm'] == 'rsa'
+        supported_algos = ['rsaes_pkcs1v15', 'rsa']
+        assert encryption_algo['algorithm'] in supported_algos
 
         plain_key = key.decrypt(
             ciphertext=encrypted_key,

@@ -33,6 +33,7 @@ class PublicKey:
         else:
             self._public_key = public_key
 
+        self._oscrypto_public_key = asymmetric.load_public_key(source=self._public_key)
         self._crypto_public_key = serialization.load_der_public_key(data=self.to_der(), backend=default_backend())
 
     def to_der(self):

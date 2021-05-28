@@ -115,7 +115,7 @@ class CACertificates:
 
 
 class EnrollmentStatus:
-    def __init__(self, fail_info=None, transaction_id=None, certificate=None, crl=None):
+    def __init__(self, fail_info=None, transaction_id=None, certificates=None, crl=None):
         if fail_info:
             self.status = PKIStatus.FAILURE
             self.fail_info = fail_info
@@ -124,5 +124,5 @@ class EnrollmentStatus:
             self.transaction_id = transaction_id
         else:
             self.status = PKIStatus.SUCCESS
-            self.certificate = certificate
+            self.certificates = certificates
             self.crl = crl

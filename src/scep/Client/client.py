@@ -129,11 +129,6 @@ class Client:
         res = self.__pki_operation(data=pki_msg.dump(), cacaps=cacaps)
 
         cert_rep = SCEPMessage.parse(raw=res.content, signer_cert=ca_certs.signer)
-        # with open('/Volumes/DataDisk/CorporateSources/portal/response', 'rb') as file_handle:
-        #     content = file_handle.read()
-        # signing_cert = Certificate.from_pem_file('/Volumes/DataDisk/Downloads/embedra_sgn.pem')
-        # enc_cert = Certificate.from_pem_file('/Volumes/DataDisk/Downloads/embedra_enc.pem')
-        # cert_rep = SCEPMessage.parse(content)
         if cert_rep.pki_status == PKIStatus.FAILURE:
             return EnrollmentStatus(fail_info=cert_rep.fail_info)
         elif cert_rep.pki_status == PKIStatus.PENDING:
@@ -149,14 +144,13 @@ class Client:
 
             if (message_type is MessageType.PKCSReq) or (message_type is MessageType.GetCert) or (message_type is MessageType.CertPoll):
                 certs = signed_response['certificates']
-                enrolled_cert = certs[0].chosen
-                certificate = Certificate(der_string=enrolled_cert.dump())
+                certificates = [Certificate(der_string=cert.chosen.dump()) for cert in certs]
             elif message_type is MessageType.GetCRL:
                 crls = signed_response['crls']
                 received_crl = crls[0].chosen
                 revocation_list = RevocationList(revocation_list=received_crl)
 
-            return EnrollmentStatus(certificate=certificate, crl=revocation_list)
+            return EnrollmentStatus(certificates=certificates, crl=revocation_list)
 
     def __pki_operation(self, data, cacaps):
         """Perform a PKIOperation using the CMS data given."""

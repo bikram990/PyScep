@@ -55,6 +55,7 @@ class Certificate:
 
     @property
     def subject(self):
+        # self.to_crypto_certificate().subject.rfc4514_string()
         return self._certificate['tbs_certificate']['subject']
 
     @property
