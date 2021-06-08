@@ -27,8 +27,9 @@ class Client:
         res = requests.get(self.url, params={'operation': 'GetCACaps', 'message': message})
         if res.status_code != 200:
             raise ValueError('Got invalid status code for GetCACaps: {}'.format(res.status_code))
-        caps = res.text.split("\n")
-        cacaps = {CACaps(cap.strip()) for cap in caps if cap.strip() != ''}
+        caps = [cap.strip().lower() for cap in res.text.splitlines() if cap.strip()]
+        reverse_cacaps = dict([(cap.value.lower(), cap) for cap in CACaps])
+        cacaps = {reverse_cacaps[cap] for cap in caps if cap in reverse_cacaps}
         return Capabilities(cacaps)
 
     def get_ca_certs(self, identifier=None):
