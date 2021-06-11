@@ -12,6 +12,7 @@ from .cryptoutils import digest_for_data
 from .enums import MessageType, PKIStatus, FailInfo
 from .asn1 import SCEPCMSAttributeType
 from .certificate import Certificate
+from .utils import unicode_from
 
 
 CMSAttribute._fields = [
@@ -242,7 +243,7 @@ class PKIMessageBuilder(object):
         """
         attr = CMSAttribute({
             'type': u'message_type',
-            'values': [PrintableString(message_type.value)],
+            'values': [PrintableString(unicode_from(message_type.value))],
         })
         self._cms_attributes.append(attr)
 
@@ -349,9 +350,9 @@ class PKIMessageBuilder(object):
                 <https://datatracker.ietf.org/doc/draft-gutmann-scep/?include_text=1>`_.
         """
         if isinstance(trans_id, str):
-            trans_id = PrintableString(trans_id)
+            trans_id = PrintableString(unicode_from(trans_id))
         elif trans_id is None:
-            trans_id = PrintableString(str(uuid4()))
+            trans_id = PrintableString(unicode_from(str(uuid4())))
 
         attr = CMSAttribute({
             'type': u'transaction_id',
@@ -404,7 +405,7 @@ class PKIMessageBuilder(object):
 
         certificates = self._certificates
 
-        da_id = DigestAlgorithmId(digest_algorithm)
+        da_id = DigestAlgorithmId(unicode_from(digest_algorithm))
         da = DigestAlgorithm({u'algorithm': da_id})
         das = DigestAlgorithms([da])
 

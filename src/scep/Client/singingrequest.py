@@ -4,9 +4,14 @@ from oscrypto import asymmetric
 from csrbuilder import CSRBuilder, _pretty_message, _type_name, pem_armor_csr
 from certbuilder import CertificateBuilder
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ec
+from cryptography.hazmat.primitives import serialization
+
 from .privatekey import PrivateKey
 from .publickey import PublicKey
 from .certificate import Certificate
+from .utils import unicode_from
 
 
 class ScepCSRBuilder(CSRBuilder):
@@ -114,18 +119,43 @@ class ScepCSRBuilder(CSRBuilder):
         })
 
 class SigningRequest:
-    @classmethod
-    def generate_pair(cls, key_type='rsa', size=2048):
-        if key_type == 'rsa':
-            public_key, private_key = asymmetric.generate_pair('rsa', bit_size=size)
-        elif key_type == 'dsa':
-            public_key, private_key = asymmetric.generate_pair('dsa', bit_size=size)
-        elif key_type == 'ec':
-            public_key, private_key = asymmetric.generate_pair('ec', bit_size=size, curve=u'secp256r1')
-        else:
-            raise ValueError('Unsupported key type ' + key_type)
+    # @classmethod
+    # def generate_pair(cls, key_type='rsa', size=2048):
+    #     if key_type == 'rsa':
+    #         public_key, private_key = asymmetric.generate_pair('rsa', bit_size=size)
+    #     elif key_type == 'dsa':
+    #         public_key, private_key = asymmetric.generate_pair('dsa', bit_size=size)
+    #     elif key_type == 'ec':
+    #         public_key, private_key = asymmetric.generate_pair('ec', bit_size=size, curve=u'secp256r1')
+    #     else:
+    #         raise ValueError('Unsupported key type ' + key_type)
+    #
+    #     return PrivateKey(private_key=private_key.asn1)
 
-        return PrivateKey(private_key=private_key.asn1)
+    @classmethod
+    def generate_pair(cls, type='rsa', size=2048):
+        if type == 'rsa':
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=size,
+                backend=default_backend(),
+            )
+        elif type == 'dsa':
+            private_key = dsa.generate_private_key(
+                key_size=size,
+                backend=default_backend()
+            )
+        elif type == 'ec':
+            private_key = ec.generate_private_key(curve=ec.SECP256R1)
+        else:
+            raise ValueError('Unsupported key type ' + type)
+
+        der = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return PrivateKey.from_der(der)
 
     @classmethod
     def generate_csr(cls, cn, key_usage, password=None, private_key=None):
@@ -134,7 +164,7 @@ class SigningRequest:
 
         builder = ScepCSRBuilder(
             {
-                u'common_name': cn,
+                u'common_name': unicode_from(cn),
             },
             private_key.public_key.to_asn1_public_key()
         )
@@ -192,7 +222,7 @@ class SigningRequest:
 
         builder = CertificateBuilder(
             {
-                u'common_name': cn,
+                u'common_name': unicode_from(cn),
             },
             private_key.public_key.to_asn1_public_key()
         )

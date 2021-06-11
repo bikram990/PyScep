@@ -80,7 +80,7 @@ class SCEPMessage(object):
                 # *     attributes containing a single attribute value in its set.
                 # */
                 for signed_attr in signer_info['signed_attrs']:
-                    name = SCEPCMSAttributeType.map(signed_attr['type'].native)
+                    name = SCEPCMSAttributeType.map(signed_attr['type'].dotted)
 
                     if name == 'transaction_id':
                         msg._transaction_id = signed_attr['values'][0].native

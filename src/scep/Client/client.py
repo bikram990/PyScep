@@ -41,12 +41,17 @@ class Client:
         if res.status_code != 200:
             raise ValueError('Got invalid status code for GetCACert: {}'.format(res.status_code))
         if res.headers['content-type'] == 'application/x-x509-ca-cert':  # we dont support RA cert yet
-            return CACertificates(certificates=[Certificate.from_der(res.content)])
+            response = CACertificates(certificates=[Certificate.from_der(res.content)])
         elif res.headers['content-type'] == 'application/x-x509-ca-ra-cert':  # intermediate via chain
             msg = SCEPMessage.parse(res.content)
             assert len(msg.certificates) > 0
-            return CACertificates(certificates=msg.certificates)
-        raise ValueError('unknown content-type ' + res.headers['content-type'])
+            response = CACertificates(certificates=msg.certificates)
+        else:
+            raise ValueError('unknown content-type ' + res.headers['content-type'])
+
+        assert response.issuer is not None
+
+        return response
 
     def rollover_certificate(self, identifier=None):
         """Query the SCEP Service for rollover certificate"""
