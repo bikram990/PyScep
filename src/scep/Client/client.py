@@ -17,6 +17,7 @@ from .asn1 import IssuerAndSubject
 class Client:
     def __init__(self, url):
         self.url = url
+        self.reverse_cacaps = dict([(cap.value.lower(), cap) for cap in CACaps])
 
     def get_ca_capabilities(self, identifier=None):
         """Query the SCEP Service for its capabilities."""
@@ -28,8 +29,7 @@ class Client:
         if res.status_code != 200:
             raise ValueError('Got invalid status code for GetCACaps: {}'.format(res.status_code))
         caps = [cap.strip().lower() for cap in res.text.splitlines() if cap.strip()]
-        reverse_cacaps = dict([(cap.value.lower(), cap) for cap in CACaps])
-        cacaps = {reverse_cacaps[cap] for cap in caps if cap in reverse_cacaps}
+        cacaps = {self.reverse_cacaps[cap] for cap in caps if cap in self.reverse_cacaps}
         return Capabilities(cacaps)
 
     def get_ca_certs(self, identifier=None):
