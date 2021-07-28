@@ -8,7 +8,7 @@ from .publickey import PublicKey
 from .crl import RevocationList
 from .enums import CACaps, PKIStatus, FailInfo
 from .responses import EnrollmentStatus, Capabilities, CACertificates
-from .singingrequest import SigningRequest, ScepCSRBuilder
+from .signingrequest import SigningRequest, ScepCSRBuilder
 
 __all__ = [
     "Client",
