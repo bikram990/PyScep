@@ -54,22 +54,22 @@ class SCEPCMSAttributeType(ObjectIdentifier):
     """Loosely modelled after CMSAttributeType in asn1crypto"""
     _map = {
         # CMSAttributeType
-        '1.2.840.113549.1.9.3': 'content_type',
-        '1.2.840.113549.1.9.4': 'message_digest',
-        '1.2.840.113549.1.9.5': 'signing_time',
-        '1.2.840.113549.1.9.6': 'counter_signature',
-        '1.2.840.113549.1.9.52': 'algorithm_protection',
+        '1.2.840.113549.1.9.3': u'content_type',
+        '1.2.840.113549.1.9.4': u'message_digest',
+        '1.2.840.113549.1.9.5': u'signing_time',
+        '1.2.840.113549.1.9.6': u'counter_signature',
+        '1.2.840.113549.1.9.52': u'algorithm_protection',
         # https://tools.ietf.org/html/rfc3161#page-20
-        '1.2.840.113549.1.9.16.2.14': 'signature_time_stamp_token',
+        '1.2.840.113549.1.9.16.2.14': u'signature_time_stamp_token',
 
         # SCEP Attributes
-        '2.16.840.1.113733.1.9.2': 'message_type',
-        '2.16.840.1.113733.1.9.3': 'pki_status',
-        '2.16.840.1.113733.1.9.4': 'fail_info',
-        '2.16.840.1.113733.1.9.5': 'sender_nonce',
-        '2.16.840.1.113733.1.9.6': 'recipient_nonce',
-        '2.16.840.1.113733.1.9.7': 'transaction_id',
-        '2.16.840.1.113733.1.9.8': 'extension_req',
+        '2.16.840.1.113733.1.9.2': u'message_type',
+        '2.16.840.1.113733.1.9.3': u'pki_status',
+        '2.16.840.1.113733.1.9.4': u'fail_info',
+        '2.16.840.1.113733.1.9.5': u'sender_nonce',
+        '2.16.840.1.113733.1.9.6': u'recipient_nonce',
+        '2.16.840.1.113733.1.9.7': u'transaction_id',
+        '2.16.840.1.113733.1.9.8': u'extension_req',
     }
 
 

@@ -1,3 +1,5 @@
+from cryptography.hazmat.primitives.asymmetric import padding
+
 from .enums import CACaps, PKIStatus
 
 
@@ -54,12 +56,46 @@ class CACertificates:
     def __init__(self, certificates):
         self._certificates = certificates
 
+        self._recipient = self.__recipient()
+        self._signer = self.__signer()
+        self._issuer = self.__issuer()
+
     @property
     def certificates(self):
         return self._certificates
 
+    def verify(self):
+        assert self.issuer is not None
+        assert self.signer is not None
+        assert self.recipient is not None
+
+        try:
+            if self.issuer != self.recipient:
+                self.issuer.to_crypto_certificate().public_key().verify(
+                    self.recipient.to_crypto_certificate().signature,
+                    self.recipient.to_crypto_certificate().tbs_certificate_bytes,
+                    padding.PKCS1v15(),
+                    self.recipient.to_crypto_certificate().signature_hash_algorithm
+                )
+        except Exception as e:
+            raise Exception('RA is not issued by CA')
+
+        try:
+            if self.issuer != self.signer:
+                self.issuer.to_crypto_certificate().public_key().verify(
+                    self.signer.to_crypto_certificate().signature,
+                    self.signer.to_crypto_certificate().tbs_certificate_bytes,
+                    padding.PKCS1v15(),
+                    self.signer.to_crypto_certificate().signature_hash_algorithm
+                )
+        except Exception as e:
+            raise Exception('RA is not issued by CA')
+
     @property
     def signer(self):
+        return self._signer
+
+    def __signer(self):
         required = set(['digital_signature'])
         not_required = set()
         digital_sign = self._filter(required_key_usage=required, not_required_key_usage=not_required, ca_only=False)
@@ -74,16 +110,25 @@ class CACertificates:
 
     @property
     def issuer(self):
+        return self._issuer
+
+    def __issuer(self):
         ca = self._filter(required_key_usage=set(), not_required_key_usage=set(), ca_only=True)
         expected = self.recipient.issuer
         for cert in ca:
             if cert.subject == expected:
                 return cert
 
+        if ca[0] == self.recipient:
+            return cert
+
         return None
 
     @property
     def recipient(self):
+        return self._recipient
+
+    def __recipient(self):
         required = set(['key_encipherment'])
         not_required = set(['digital_signature', 'non_repudiation', 'data_encipherment'])
         key_enc = self._filter(required_key_usage=required, not_required_key_usage=not_required, ca_only=False)
