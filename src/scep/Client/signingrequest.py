@@ -1,3 +1,4 @@
+import six
 from asn1crypto import pem, csr, keys as asn1_keys
 from asn1crypto.core import PrintableString
 from oscrypto import asymmetric
@@ -11,7 +12,6 @@ from cryptography.hazmat.primitives import serialization
 from .privatekey import PrivateKey
 from .publickey import PublicKey
 from .certificate import Certificate
-from .utils import unicode_from
 
 
 class ScepCSRBuilder(CSRBuilder):
@@ -164,13 +164,13 @@ class SigningRequest:
 
         builder = ScepCSRBuilder(
             {
-                u'common_name': unicode_from(cn),
+                u'common_name': six.text_type(cn),
             },
             private_key.public_key.to_asn1_public_key()
         )
         builder.key_usage = key_usage #[u'digital_signature', u'key_encipherment']
         if password:
-            builder.password = password
+            builder.password = six.text_type(password)
 
         request = builder.build(private_key.to_asn1_private_key())
 
@@ -222,7 +222,7 @@ class SigningRequest:
 
         builder = CertificateBuilder(
             {
-                u'common_name': unicode_from(cn),
+                u'common_name': six.text_type(cn),
             },
             private_key.public_key.to_asn1_public_key()
         )

@@ -1,7 +1,9 @@
 import os
 import logging
+from base64 import b64encode
 from uuid import uuid4
 
+import six
 from asn1crypto.core import PrintableString
 from asn1crypto.cms import CMSAttribute, ContentInfo, EnvelopedData, SignedData, SignerInfos, \
     SignerInfo, CMSAttributes, SignerIdentifier, IssuerAndSerialNumber, OctetString, CertificateSet, \
@@ -12,7 +14,6 @@ from .cryptoutils import digest_for_data
 from .enums import MessageType, PKIStatus, FailInfo
 from .asn1 import SCEPCMSAttributeType
 from .certificate import Certificate
-from .utils import unicode_from
 
 
 CMSAttribute._fields = [
@@ -73,7 +74,7 @@ class Signer(object):
                  certificate,
                  private_key,
                  digest_algorithm,
-                 signed_attributes = None):
+                 signed_attributes=None):
 
         self.certificate = certificate
         self.private_key = private_key
@@ -159,7 +160,11 @@ class Signer(object):
         #     'digest': d,
         # })
 
-        signature = self.private_key.sign(data=cms_attributes.dump(), padding_type='pkcs', algorithm=self.digest_algorithm_id.native)
+        signature = self.private_key.sign(
+            data=cms_attributes.dump(),
+            padding_type='pkcs',
+            algorithm=self.digest_algorithm_id.native
+        )
 
         signer_info = SignerInfo({
             # Version must be 1 if signer uses IssuerAndSerialNumber as sid
@@ -243,8 +248,11 @@ class PKIMessageBuilder(object):
         """
         attr = CMSAttribute({
             'type': u'message_type',
-            'values': [PrintableString(unicode_from(message_type.value))],
+            'values': [PrintableString(six.text_type(message_type.value))],
         })
+
+        logger.debug("{:<20}: {}".format('Message Type', message_type.value))
+
         self._cms_attributes.append(attr)
 
         return self
@@ -262,7 +270,7 @@ class PKIMessageBuilder(object):
 
         return self
 
-    def pki_status(self, status, failure_info = None):
+    def pki_status(self, status, failure_info=None):
         """Set the PKI status of the operation.
 
         Args:
@@ -280,6 +288,8 @@ class PKIMessageBuilder(object):
         })
         self._cms_attributes.append(attr)
 
+        logger.debug("{:<20}: {}".format('PKI Status', status.value))
+
         if status == PKIStatus.FAILURE:
             if failure_info is None:
                 raise ValueError('You cannot specify failure without failure info')
@@ -288,11 +298,14 @@ class PKIMessageBuilder(object):
                 'type': 'fail_info',
                 'values': [PrintableString(failure_info.value)],
             })
+
+            logger.debug("{:<20}: {}".format('Failure Info', failure_info.value))
+
             self._cms_attributes.append(fail_attr)
 
         return self
 
-    def sender_nonce(self, nonce = None):
+    def sender_nonce(self, nonce=None):
         """Add a sender nonce.
 
         Args:
@@ -312,6 +325,8 @@ class PKIMessageBuilder(object):
             'type': u'sender_nonce',
             'values': [nonce],
         })
+
+        logger.debug("{:<20}: {}".format('Sender Nonce', b64encode(nonce.native)))
 
         self._cms_attributes.append(attr)
         return self
@@ -335,6 +350,8 @@ class PKIMessageBuilder(object):
             'values': [nonce],
         })
 
+        logger.debug("{:<20}: {}".format('Recipient Nonce', b64encode(nonce.native)))
+
         self._cms_attributes.append(attr)
         return self
 
@@ -350,14 +367,16 @@ class PKIMessageBuilder(object):
                 <https://datatracker.ietf.org/doc/draft-gutmann-scep/?include_text=1>`_.
         """
         if isinstance(trans_id, str):
-            trans_id = PrintableString(unicode_from(trans_id))
+            trans_id = PrintableString(six.text_type(trans_id))
         elif trans_id is None:
-            trans_id = PrintableString(unicode_from(str(uuid4())))
+            trans_id = PrintableString(six.text_type(str(uuid4())))
 
         attr = CMSAttribute({
             'type': u'transaction_id',
             'values': [trans_id]
         })
+
+        logger.debug("{:<20}: {}".format('Transaction ID', trans_id))
 
         self._cms_attributes.append(attr)
         return self
@@ -405,7 +424,7 @@ class PKIMessageBuilder(object):
 
         certificates = self._certificates
 
-        da_id = DigestAlgorithmId(unicode_from(digest_algorithm))
+        da_id = DigestAlgorithmId(six.text_type(digest_algorithm))
         da = DigestAlgorithm({u'algorithm': da_id})
         das = DigestAlgorithms([da])
 

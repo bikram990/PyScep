@@ -1,3 +1,5 @@
+import logging
+
 import requests
 import base64
 
@@ -12,6 +14,9 @@ from .responses import EnrollmentStatus, Capabilities, CACertificates
 from .message import SCEPMessage
 from .enums import CACaps, MessageType, PKIStatus
 from .asn1 import IssuerAndSubject
+
+
+logger = logging.getLogger(__name__)
 
 
 class Client:
@@ -30,6 +35,8 @@ class Client:
             raise ValueError('Got invalid status code for GetCACaps: {}'.format(res.status_code))
         caps = [cap.strip().lower() for cap in res.text.splitlines() if cap.strip()]
         cacaps = {self.reverse_cacaps[cap] for cap in caps if cap in self.reverse_cacaps}
+        cacaps_str = [cap.value for cap in cacaps]
+        logger.debug('Server Capabilities are ' + ', '.join(cacaps_str))
         return Capabilities(cacaps)
 
     def get_ca_certs(self, identifier=None):
@@ -42,15 +49,18 @@ class Client:
         if res.status_code != 200:
             raise ValueError('Got invalid status code for GetCACert: {}'.format(res.status_code))
         if res.headers['content-type'] == 'application/x-x509-ca-cert':  # we dont support RA cert yet
+            logger.debug('Received response with CA certificates')
             response = CACertificates(certificates=[Certificate.from_der(res.content)])
+            assert len(response.certificates) > 0
         elif res.headers['content-type'] == 'application/x-x509-ca-ra-cert':  # intermediate via chain
+            logger.debug('Received response with RA certificates')
             msg = SCEPMessage.parse(res.content)
-            assert len(msg.certificates) > 0
             response = CACertificates(certificates=msg.certificates)
+            assert len(response.certificates) > 1
         else:
             raise ValueError('unknown content-type ' + res.headers['content-type'])
 
-        assert response.issuer is not None
+        response.verify()
 
         return response
 
@@ -135,6 +145,7 @@ class Client:
         res = self.__pki_operation(data=pki_msg.dump(), cacaps=cacaps)
 
         cert_rep = SCEPMessage.parse(raw=res.content, signer_cert=ca_certs.signer)
+        cert_rep.debug()
         if cert_rep.pki_status == PKIStatus.FAILURE:
             return EnrollmentStatus(fail_info=cert_rep.fail_info)
         elif cert_rep.pki_status == PKIStatus.PENDING:

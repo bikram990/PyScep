@@ -1,4 +1,3 @@
-
 """Python SCEP Client."""
 
 from .client import Client
