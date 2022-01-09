@@ -156,7 +156,7 @@ class Client:
             assert degenerate_info['content_type'].native == 'signed_data'
             signed_response = degenerate_info['content']
 
-            certificate = None
+            certificates = None
             revocation_list = None
 
             if (message_type is MessageType.PKCSReq) or (message_type is MessageType.GetCert) or (message_type is MessageType.CertPoll):

@@ -31,7 +31,10 @@ python -m build --wheel
 python -m twine upload --repository testpypi dist/PyScep-{version}-py2.py3-none-any.whl
 
 # Install from test server
-pip uninstall -i https://test.pypi.org/simple/ PyScep=={version}
+pip install -i https://test.pypi.org/simple/ PyScep=={version}
+
+# Uninstall the test version
+pip uninstall PyScep=={version}
 
 # Upload to production server
 python -m twine upload --repository pypi dist/PyScep-{version}-py2-none-any.whl
