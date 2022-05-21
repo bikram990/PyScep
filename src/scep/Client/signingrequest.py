@@ -252,7 +252,7 @@ class SigningRequest:
 
     def __init__(self, der_string=None, request=None):
         if request is None:
-            self._csr = csr.CertificationRequest(der_string)
+            self._csr = csr.CertificationRequest.load(der_string)
         else:
             self._csr = request
 
