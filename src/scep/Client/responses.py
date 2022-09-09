@@ -24,10 +24,7 @@ class Capabilities:
 
     def strongest_cipher(self):
         if self.contains(CACaps.AES):
-            if self.contains(CACaps.SHA256):
-                return 'aes256'
-            else:
-                return 'aes128'
+            return 'aes128'
         else:
             return '3des'
 

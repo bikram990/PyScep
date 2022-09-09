@@ -114,12 +114,12 @@ class Client:
 
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.GetCRL, cacaps=cacaps, ca_certs=ca_certs)
 
-    def enrol(self, csr, identity, identity_private_key, identifier=None):
+    def enrol(self, csr, identity, identity_private_key, identifier=None, keyEncAlg=None):
         """Perform a PKCSReq operation by submitting a CSR to the SCEP service."""
         cacaps = self.get_ca_capabilities(identifier=identifier)
         ca_certs = self.get_ca_certs(identifier=identifier)
-        envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), cacaps.strongest_cipher())
-        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm='sha1')
+        envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), cacaps.strongest_cipher(), keyEncAlg)
+        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm='sha256')
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.PKCSReq, cacaps=cacaps, ca_certs=ca_certs, transaction_id=transaction_id)
 
     def _pki_operation(self, identity, identity_private_key, envelope, message_type, cacaps, ca_certs, transaction_id=None):
@@ -176,7 +176,7 @@ class Client:
             res = requests.post(self.url, params={'operation': 'PKIOperation', 'message': ''}, data=data, headers=headers)
         else:
             b64_bytes = base64.b64encode(data)
-            b64_string = b64_bytes.encode('ascii')
+            b64_string = b64_bytes.decode('utf-8')
             res = requests.get(self.url, params={'operation': 'PKIOperation', 'message': b64_string}, data=data, headers=headers)
 
         if res.status_code != 200:
