@@ -133,10 +133,16 @@ class PKCSPKIEnvelopeBuilder(object):
         Returns:
               RecipientInfo: Instance of ASN.1 data structure with required attributes and encrypted key.
         """
-        encrypted_symkey = recipient.public_key.encrypt(
-            plaintext=symmetric_key,
-            padding_type='pkcs'
-        )
+        if self._KeyEncryptionAlgorithm.native['algorithm'] == 'rsaes_oaep' :
+            encrypted_symkey = recipient.public_key.encrypt(
+                plaintext=symmetric_key,
+                padding_type='oaep'
+            )
+        else :
+            encrypted_symkey = recipient.public_key.encrypt(
+                plaintext=symmetric_key,
+                padding_type='pkcs'
+            )
         asn1cert = recipient.to_asn1_certificate()
         ias = IssuerAndSerialNumber({
             'issuer': asn1cert.issuer,
