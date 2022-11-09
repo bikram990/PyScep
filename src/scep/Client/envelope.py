@@ -66,7 +66,7 @@ class PKCSPKIEnvelopeBuilder(object):
             self._KeyEncryptionAlgorithm = KeyEncryptionAlgorithm(
                     {'algorithm': KeyEncryptionAlgorithmId(u'rsa')}
                     ) 
-        if keyEncAlg == 'rsaes_oaep' :
+        elif keyEncAlg == 'rsaes_oaep' :
             self._keyEncAlg = self._KeyEncryptionAlgorithm = KeyEncryptionAlgorithm(
                     {
                         'algorithm': KeyEncryptionAlgorithmId(u'rsaes_oaep'),
@@ -133,16 +133,18 @@ class PKCSPKIEnvelopeBuilder(object):
         Returns:
               RecipientInfo: Instance of ASN.1 data structure with required attributes and encrypted key.
         """
-        if self._KeyEncryptionAlgorithm.native['algorithm'] == 'rsaes_oaep' :
+        if self._KeyEncryptionAlgorithm.native['algorithm'] == 'rsaes_oaep':
             encrypted_symkey = recipient.public_key.encrypt(
                 plaintext=symmetric_key,
                 padding_type='oaep'
             )
-        else :
+        elif self._KeyEncryptionAlgorithm.native['algorithm'] == 'rsa':
             encrypted_symkey = recipient.public_key.encrypt(
                 plaintext=symmetric_key,
                 padding_type='pkcs'
             )
+        else:
+            raise ValueError('Key encription algorithm not supported: %s' % self._KeyEncryptionAlgorithm.native['algorithm'])
         asn1cert = recipient.to_asn1_certificate()
         ias = IssuerAndSerialNumber({
             'issuer': asn1cert.issuer,

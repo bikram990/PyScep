@@ -218,10 +218,14 @@ class SCEPMessage(object):
 
         supported_algos = ['rsaes_pkcs1v15', 'rsa']
         assert encryption_algo['algorithm'] in supported_algos
+        if  encryption_algo['algorithm'] == 'rsa':
+            padding = 'pkcs'
+        elif encryption_algo['algorithm'] == 'rsaes_pkcs1v15':
+            padding = 'oaep'
 
         plain_key = key.decrypt(
             ciphertext=encrypted_key,
-            padding_type='pkcs'
+            padding_type=padding
         )
 
         # Now we have the plain key, we can decrypt the encrypted data
