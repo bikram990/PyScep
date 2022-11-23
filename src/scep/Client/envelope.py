@@ -62,11 +62,7 @@ class PKCSPKIEnvelopeBuilder(object):
         else:
             raise ValueError('Unrecognised encryption algorithm ', algorithm)
 
-        if keyEncAlg == 'rsa':
-            self._KeyEncryptionAlgorithm = KeyEncryptionAlgorithm(
-                    {'algorithm': KeyEncryptionAlgorithmId(u'rsa')}
-                    ) 
-        elif keyEncAlg == 'rsaes_oaep' :
+        if keyEncAlg == 'rsaes_oaep' :
             self._keyEncAlg = self._KeyEncryptionAlgorithm = KeyEncryptionAlgorithm(
                     {
                         'algorithm': KeyEncryptionAlgorithmId(u'rsaes_oaep'),
@@ -78,6 +74,10 @@ class PKCSPKIEnvelopeBuilder(object):
                         )
                     }
                 )
+        else:
+            self._KeyEncryptionAlgorithm = KeyEncryptionAlgorithm(
+                    {'algorithm': KeyEncryptionAlgorithmId(u'rsa')}
+                    ) 
         return self
 
     def add_recipient(self, certificate):
