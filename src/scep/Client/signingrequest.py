@@ -119,19 +119,6 @@ class ScepCSRBuilder(CSRBuilder):
         })
 
 class SigningRequest:
-    # @classmethod
-    # def generate_pair(cls, key_type='rsa', size=2048):
-    #     if key_type == 'rsa':
-    #         public_key, private_key = asymmetric.generate_pair('rsa', bit_size=size)
-    #     elif key_type == 'dsa':
-    #         public_key, private_key = asymmetric.generate_pair('dsa', bit_size=size)
-    #     elif key_type == 'ec':
-    #         public_key, private_key = asymmetric.generate_pair('ec', bit_size=size, curve=u'secp256r1')
-    #     else:
-    #         raise ValueError('Unsupported key type ' + key_type)
-    #
-    #     return PrivateKey(private_key=private_key.asn1)
-
     @classmethod
     def generate_pair(cls, type='rsa', size=2048):
         if type == 'rsa':

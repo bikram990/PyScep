@@ -56,9 +56,9 @@ class CACertificates:
     def __init__(self, certificates):
         self._certificates = certificates
 
-        self._recipient = self.__recipient()
-        self._signer = self.__signer()
-        self._issuer = self.__issuer()
+        self._recipient = certificates[0]
+        self._signer = certificates[0]
+        self._issuer = certificates[0]
 
     @property
     def certificates(self):
@@ -141,10 +141,9 @@ class CACertificates:
         if len(data_enc) > 0:
             return data_enc[0]
 
-        ca = self._filter(required_key_usage=set(), not_required_key_usage=set(), ca_only=True)
+        ca = self._filter(required_key_usage=set(), not_required_key_usage=set(), ca_only=False)
         if len(ca) > 0:
             return ca[0]
-
         return None
 
     def _filter(self, required_key_usage, not_required_key_usage, ca_only=False):
