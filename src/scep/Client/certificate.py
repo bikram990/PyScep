@@ -3,12 +3,22 @@ from oscrypto import asymmetric, keys
 
 from cryptography import x509 as crypto_x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 from .privatekey import PrivateKey
 from .publickey import PublicKey
 
 
 class Certificate:
+    
+    @classmethod
+    def get_x509_certificate(cls, certificate_raw_file, get_public_bytes=False):
+        certificate_raw = ''
+        with open(certificate_raw_file, 'r') as c:
+            certificate_raw = c.read()
+        c = crypto_x509.load_pem_x509_certificate(certificate_raw.encode(), backend=default_backend())
+        return c.public_bytes(encoding=serialization.Encoding.DER) if get_public_bytes else c
+
     @classmethod
     def from_p12_file(cls, p12_file, password=None):
         with open(p12_file, 'rb') as file_handle:

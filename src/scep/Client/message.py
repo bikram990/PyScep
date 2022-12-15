@@ -37,11 +37,11 @@ class SCEPMessage(object):
 
         if len(signed_data['certificates']) > 0:
             certs = [Certificate(certificate=cert.chosen) for cert in signed_data['certificates']]
-            logger.debug('{} certificate(s) attached to signedData'.format(len(certs)))
+            print('{} certificate(s) attached to signedData'.format(len(certs)))
             msg._certificates = certs
         else:
             certs = None
-            logger.debug('No certificates attached to SignedData')
+            print('No certificates attached to SignedData')
 
         # Iterate through signers and verify the signature for each.
         # Set convenience attributes at the same time
@@ -52,9 +52,9 @@ class SCEPMessage(object):
             assert isinstance(identifier, IssuerAndSerialNumber)  # TODO: also support other signer ids
 
             sig_algo = signer_info['signature_algorithm'].signature_algo
-            logger.debug('Using signature algorithm: {}'.format(sig_algo))
+            print('Using signature algorithm: {}'.format(sig_algo))
             hash_algo = signer_info['digest_algorithm']['algorithm'].native
-            logger.debug('Using digest algorithm: {}'.format(hash_algo))
+            print('Using digest algorithm: {}'.format(hash_algo))
 
             assert sig_algo == 'rsassa_pkcs1v15'  # We only support PKCS1v1.5
 
@@ -210,7 +210,7 @@ class SCEPMessage(object):
         """
         encap = self.encap_content_info
         ct = encap['content_type'].native
-        logger.debug('content_type is {}'.format(ct))
+        print('content_type is {}'.format(ct))
         recipient_info = encap['content']['recipient_infos'][0]
 
         encryption_algo = recipient_info.chosen['key_encryption_algorithm'].native
@@ -223,45 +223,44 @@ class SCEPMessage(object):
             ciphertext=encrypted_key,
             padding_type='pkcs'
         )
-
         # Now we have the plain key, we can decrypt the encrypted data
         encrypted_contentinfo = encap['content']['encrypted_content_info']
-        logger.debug('encrypted content type is {}'.format(encrypted_contentinfo['content_type'].native))
+        print('encrypted content type is {}'.format(encrypted_contentinfo['content_type'].native))
 
         algorithm = encrypted_contentinfo['content_encryption_algorithm']  #: EncryptionAlgorithm
         encrypted_content_bytes = encrypted_contentinfo['encrypted_content'].native
 
-        logger.debug('key length is {}'.format(algorithm.key_length))
-        logger.debug('cipher is {}'.format(algorithm.encryption_cipher))
-        logger.debug('enc mode is {}'.format(algorithm.encryption_mode))
+        print('key length is {}'.format(algorithm.key_length))
+        print('cipher is {}'.format(algorithm.encryption_cipher))
+        print('enc mode is {}'.format(algorithm.encryption_mode))
 
         return decrypt(cipher=algorithm.encryption_cipher, mode=algorithm.encryption_mode, key=plain_key, iv=algorithm.encryption_iv, encrypted_content=encrypted_content_bytes)
 
     def debug(self):
-        logger.debug("SCEP Message")
-        logger.debug("------------")
-        logger.debug("{:<20}: {}".format('Transaction ID', self.transaction_id))
-        logger.debug("{:<20}: {}".format('Message Type', self.message_type))
-        logger.debug("{:<20}: {}".format('PKI Status', self.pki_status))
+        print("SCEP Message")
+        print("------------")
+        print("{:<20}: {}".format('Transaction ID', self.transaction_id))
+        print("{:<20}: {}".format('Message Type', self.message_type))
+        print("{:<20}: {}".format('PKI Status', self.pki_status))
 
         if self.sender_nonce is not None:
-            logger.debug("{:<20}: {}".format('Sender Nonce', b64encode(self.sender_nonce)))
+            print("{:<20}: {}".format('Sender Nonce', b64encode(self.sender_nonce)))
         if self.recipient_nonce is not None:
-            logger.debug("{:<20}: {}".format('Recipient Nonce', b64encode(self.recipient_nonce)))
+            print("{:<20}: {}".format('Recipient Nonce', b64encode(self.recipient_nonce)))
 
-        logger.debug('------------')
-        logger.debug('Certificates')
-        logger.debug('------------')
-        logger.debug('Includes {} certificate(s)'.format(len(self.certificates)))
+        print('------------')
+        print('Certificates')
+        print('------------')
+        print('Includes {} certificate(s)'.format(len(self.certificates)))
         for c in self.certificates:
-            logger.debug(c.subject.human_friendly)
+            print(c.subject.human_friendly)
 
-        logger.debug('Signer(s)')
-        logger.debug('------------')
+        print('Signer(s)')
+        print('------------')
 
         x509name, serial = self.signer
-        logger.debug("{:<20}: {}".format('Issuer X.509 Name', x509name))
-        # logger.debug("{:<20}: {}".format('Issuer S/N', serial))
+        print("{:<20}: {}".format('Issuer X.509 Name', x509name))
+        # print("{:<20}: {}".format('Issuer S/N', serial))
 
-        logger.debug("{:<20}: {}".format('Signature Algorithm', self._signer_info['signature_algorithm'].signature_algo))
-        logger.debug("{:<20}: {}".format('Digest Algorithm', self._signer_info['digest_algorithm']['algorithm'].native))
+        print("{:<20}: {}".format('Signature Algorithm', self._signer_info['signature_algorithm'].signature_algo))
+        print("{:<20}: {}".format('Digest Algorithm', self._signer_info['digest_algorithm']['algorithm'].native))

@@ -61,7 +61,6 @@ class Client:
             raise ValueError('unknown content-type ' + res.headers['content-type'])
 
         response.verify()
-
         return response
 
     def rollover_certificate(self, identifier=None):
@@ -114,21 +113,21 @@ class Client:
 
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.GetCRL, cacaps=cacaps, ca_certs=ca_certs)
 
-    def enrol(self, csr, identity, identity_private_key, identifier=None):
+    def enroll(self, csr, identity, identity_private_key, cacaps):
         """Perform a PKCSReq operation by submitting a CSR to the SCEP service."""
-        cacaps = self.get_ca_capabilities(identifier=identifier)
-        ca_certs = self.get_ca_certs(identifier=identifier)
-        envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), cacaps.strongest_cipher())
-        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm='sha1')
+        cacaps = Capabilities(cacaps)
+        ca_certs = CACertificates([identity])
+        envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), 'aes256')
+        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm='sha256')
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.PKCSReq, cacaps=cacaps, ca_certs=ca_certs, transaction_id=transaction_id)
 
-    def _pki_operation(self, identity, identity_private_key, envelope, message_type, cacaps, ca_certs, transaction_id=None):
+    def _pki_operation(self, identity, identity_private_key, envelope, message_type, cacaps, ca_certs, transaction_id=None, parse=False):
         """Perform a PKIOperation using the PKI Envelope given."""
         envelope = envelope.add_recipient(ca_certs.recipient)
 
         envelope, key, iv = envelope.finalize()
 
-        signer = Signer(identity, identity_private_key, cacaps.strongest_signature_algorithm())
+        signer = Signer(identity, identity_private_key, 'sha256')
 
         pki_msg_builder = PKIMessageBuilder().message_type(
             message_type
@@ -140,17 +139,18 @@ class Client:
             transaction_id
         ).sender_nonce()
 
-        pki_msg = pki_msg_builder.finalize(digest_algorithm=cacaps.strongest_message_digest())
+        pki_msg = pki_msg_builder.finalize(digest_algorithm='sha256')
 
         res = self.__pki_operation(data=pki_msg.dump(), cacaps=cacaps)
-
-        cert_rep = SCEPMessage.parse(raw=res.content, signer_cert=ca_certs.signer)
+        cert_rep = SCEPMessage.parse(raw=res.content)
         cert_rep.debug()
         if cert_rep.pki_status == PKIStatus.FAILURE:
             return EnrollmentStatus(fail_info=cert_rep.fail_info)
         elif cert_rep.pki_status == PKIStatus.PENDING:
             return EnrollmentStatus(transaction_id=cert_rep.transaction_id)
         else:
+            if not parse:
+                return cert_rep
             decrypted_bytes = cert_rep.get_decrypted_envelope_data(identity, identity_private_key)
             degenerate_info = ContentInfo.load(decrypted_bytes)
             assert degenerate_info['content_type'].native == 'signed_data'
@@ -176,7 +176,8 @@ class Client:
             res = requests.post(self.url, params={'operation': 'PKIOperation', 'message': ''}, data=data, headers=headers)
         else:
             b64_bytes = base64.b64encode(data)
-            b64_string = b64_bytes.encode('ascii')
+            b64_string = b64_bytes.decode('utf-8')
+
             res = requests.get(self.url, params={'operation': 'PKIOperation', 'message': b64_string}, data=data, headers=headers)
 
         if res.status_code != 200:
