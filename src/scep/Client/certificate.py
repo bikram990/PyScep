@@ -9,7 +9,6 @@ from .publickey import PublicKey
 
 
 class Certificate:
-    
     @classmethod
     def from_p12_file(cls, p12_file, password=None):
         with open(p12_file, 'rb') as file_handle:

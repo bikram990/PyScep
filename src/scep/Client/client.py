@@ -142,7 +142,8 @@ class Client:
         pki_msg = pki_msg_builder.finalize(digest_algorithm=cacaps.strongest_message_digest())
 
         res = self.__pki_operation(data=pki_msg.dump(), cacaps=cacaps)
-        cert_rep = SCEPMessage.parse(raw=res.content)
+
+        cert_rep = SCEPMessage.parse(raw=res.content, signer_cert=ca_certs.signer)
         cert_rep.debug()
         if cert_rep.pki_status == PKIStatus.FAILURE:
             return EnrollmentStatus(fail_info=cert_rep.fail_info)
@@ -174,8 +175,7 @@ class Client:
             res = requests.post(self.url, params={'operation': 'PKIOperation', 'message': ''}, data=data, headers=headers)
         else:
             b64_bytes = base64.b64encode(data)
-            b64_string = b64_bytes.decode('ascii')
-
+            b64_string = b64_bytes.encode('ascii')
             res = requests.get(self.url, params={'operation': 'PKIOperation', 'message': b64_string}, data=data, headers=headers)
 
         if res.status_code != 200:

@@ -98,7 +98,7 @@ class CACertificates:
     def __signer(self):
         required = set(['digital_signature'])
         not_required = set()
-        digital_sign = self._filter(required_key_usage=required, not_required_key_usage=not_required, ca_only=True)
+        digital_sign = self._filter(required_key_usage=required, not_required_key_usage=not_required, ca_only=False)
         if len(digital_sign) > 0:
             return digital_sign[0]
 
@@ -141,9 +141,10 @@ class CACertificates:
         if len(data_enc) > 0:
             return data_enc[0]
 
-        ca = self._filter(required_key_usage=set(), not_required_key_usage=set(), ca_only=False)
+        ca = self._filter(required_key_usage=set(), not_required_key_usage=set(), ca_only=True)
         if len(ca) > 0:
             return ca[0]
+
         return None
 
     def _filter(self, required_key_usage, not_required_key_usage, ca_only=False):
