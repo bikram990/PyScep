@@ -223,6 +223,7 @@ class SCEPMessage(object):
             ciphertext=encrypted_key,
             padding_type='pkcs'
         )
+
         # Now we have the plain key, we can decrypt the encrypted data
         encrypted_contentinfo = encap['content']['encrypted_content_info']
         logger.debug('encrypted content type is {}'.format(encrypted_contentinfo['content_type'].native))

@@ -56,9 +56,9 @@ class CACertificates:
     def __init__(self, certificates):
         self._certificates = certificates
 
-        self._recipient = certificates[0]
-        self._signer = certificates[0]
-        self._issuer = certificates[0]
+        self._recipient = self.__recipient()
+        self._signer = self.__signer()
+        self._issuer = self.__issuer()
 
     @property
     def certificates(self):
@@ -98,7 +98,7 @@ class CACertificates:
     def __signer(self):
         required = set(['digital_signature'])
         not_required = set()
-        digital_sign = self._filter(required_key_usage=required, not_required_key_usage=not_required, ca_only=False)
+        digital_sign = self._filter(required_key_usage=required, not_required_key_usage=not_required, ca_only=True)
         if len(digital_sign) > 0:
             return digital_sign[0]
 
@@ -149,12 +149,14 @@ class CACertificates:
     def _filter(self, required_key_usage, not_required_key_usage, ca_only=False):
         matching_certificates = list()
         for cert in self._certificates:
-            if (bool(cert.is_ca) != ca_only) or \
-                    (required_key_usage.intersection(cert.key_usage) != required_key_usage) or \
-                    (not_required_key_usage.difference(cert.key_usage) != not_required_key_usage):
-                continue
-
-            matching_certificates.append(cert)
+            if cert.key_usage is not None:
+                if (cert.is_ca != ca_only) or \
+                        (required_key_usage.intersection(cert.key_usage) != required_key_usage) or \
+                        (not_required_key_usage.difference(cert.key_usage) != not_required_key_usage):
+                    continue
+                matching_certificates.append(cert)
+            else:
+                matching_certificates.append(cert)
         return matching_certificates
 
 
