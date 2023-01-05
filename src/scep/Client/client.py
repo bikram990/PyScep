@@ -118,7 +118,7 @@ class Client:
         cacaps = self.get_ca_capabilities(identifier=identifier)
         ca_certs = self.get_ca_certs(identifier=identifier)
         envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), cacaps.strongest_cipher())
-        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm=cacaps.strongest_signature_algorithm())
+        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm='sha1')
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.PKCSReq, cacaps=cacaps, ca_certs=ca_certs, transaction_id=transaction_id)
 
     def _pki_operation(self, identity, identity_private_key, envelope, message_type, cacaps, ca_certs, transaction_id=None):
