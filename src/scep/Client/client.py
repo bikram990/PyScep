@@ -61,6 +61,7 @@ class Client:
             raise ValueError('unknown content-type ' + res.headers['content-type'])
 
         response.verify()
+
         return response
 
     def rollover_certificate(self, identifier=None):
