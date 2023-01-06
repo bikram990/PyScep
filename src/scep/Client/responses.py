@@ -150,13 +150,11 @@ class CACertificates:
     def _filter(self, required_key_usage, not_required_key_usage, ca_only=False):
         matching_certificates = list()
         for cert in self._certificates:
-            if cert.key_usage is not None:
-                if (cert.is_ca != ca_only) or \
-                        (required_key_usage.intersection(cert.key_usage) != required_key_usage) or \
-                        (not_required_key_usage.difference(cert.key_usage) != not_required_key_usage):
-                    continue
+            if cert.key_usage is None:
                 matching_certificates.append(cert)
-            else:
+            elif (cert.is_ca == ca_only) and \
+                    (required_key_usage.intersection(cert.key_usage) == required_key_usage) and \
+                    (not_required_key_usage.difference(cert.key_usage) == not_required_key_usage):
                 matching_certificates.append(cert)
         return matching_certificates
 
