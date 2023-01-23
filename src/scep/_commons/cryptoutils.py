@@ -35,7 +35,16 @@ def hex_digest_for_data(algorithm, data):
     return digest_function(data).hexdigest()
 
 
-def padding_for_type(padding_type, hash_algo=hashes.SHA256, mgf=padding.MGF1, label=None):
+def padding_for_encryption_algo(encryption_algo):
+    if encryption_algo == 'rsa' or encryption_algo == 'rsaes_pkcs1v15' or encryption_algo == 'rsassa_pkcs1v15':
+        padding = 'pkcs'
+    elif encryption_algo == 'rsaes_oaep':
+        padding = 'oaep'
+    else:
+        raise Exception('Unsupported encryption algo')
+    return padding
+
+def padding_for_type(padding_type, hash_algo=hashes.SHA256(), mgf=padding.MGF1, label=None):
     if padding_type == 'pkcs':
         return padding.PKCS1v15()
     elif padding_type == 'pss':

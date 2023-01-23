@@ -2,6 +2,7 @@ from asn1crypto import pem
 from oscrypto import asymmetric, keys
 
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ec
 from cryptography.hazmat.backends import default_backend
 
 from .cryptoutils import padding_for_type, digest_function_for_type
@@ -27,6 +28,31 @@ class PrivateKey:
     @classmethod
     def from_der(cls, der_string, password=None):
         return cls(der_string=der_string, password=password)
+
+    @classmethod
+    def generate_pair(cls, type='rsa', size=2048):
+        if type == 'rsa':
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=size,
+                backend=default_backend(),
+            )
+        elif type == 'dsa':
+            private_key = dsa.generate_private_key(
+                key_size=size,
+                backend=default_backend()
+            )
+        elif type == 'ec':
+            private_key = ec.generate_private_key(curve=ec.SECP256R1)
+        else:
+            raise ValueError('Unsupported key type ' + type)
+
+        der = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return PrivateKey.from_der(der)
 
     def __init__(self, der_string=None, password=None, private_key=None):
         if private_key is None:

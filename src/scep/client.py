@@ -1,3 +1,4 @@
+import sys
 import logging
 
 import requests
@@ -5,15 +6,15 @@ import base64
 
 from asn1crypto.cms import ContentInfo, IssuerAndSerialNumber
 
-from .builders import PKIMessageBuilder, Signer
-from .certificate import Certificate
-from .crl import RevocationList
-from .cryptoutils import digest_for_data, hex_digest_for_data
-from .envelope import PKCSPKIEnvelopeBuilder
-from .responses import EnrollmentStatus, Capabilities, CACertificates
-from .message import SCEPMessage
-from .enums import CACaps, MessageType, PKIStatus
-from .asn1 import IssuerAndSubject
+from ._commons.builders import PKIMessageBuilder, Signer
+from ._commons.certificate import Certificate
+from ._commons.crl import RevocationList
+from ._commons.cryptoutils import hex_digest_for_data
+from ._commons.envelope import PKCSPKIEnvelopeBuilder
+from ._commons.responses import EnrollmentStatus, Capabilities, CACertificates
+from ._commons.message import SCEPMessage
+from ._commons.enums import CACaps, MessageType, PKIStatus
+from ._commons.asn1 import IssuerAndSubject
 
 
 logger = logging.getLogger(__name__)
@@ -114,12 +115,12 @@ class Client:
 
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.GetCRL, cacaps=cacaps, ca_certs=ca_certs)
 
-    def enrol(self, csr, identity, identity_private_key, identifier=None):
+    def enrol(self, csr, identity, identity_private_key, identifier=None, key_enc_alg='rsa', trans_id_alg='sha1'):
         """Perform a PKCSReq operation by submitting a CSR to the SCEP service."""
         cacaps = self.get_ca_capabilities(identifier=identifier)
         ca_certs = self.get_ca_certs(identifier=identifier)
-        envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), cacaps.strongest_cipher())
-        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm='sha1')
+        envelope = PKCSPKIEnvelopeBuilder().encrypt(csr.to_der(), cacaps.strongest_cipher(), key_enc_alg)
+        transaction_id = hex_digest_for_data(data=csr.public_key.to_der(), algorithm=trans_id_alg)
         return self._pki_operation(identity=identity, identity_private_key=identity_private_key, envelope=envelope, message_type=MessageType.PKCSReq, cacaps=cacaps, ca_certs=ca_certs, transaction_id=transaction_id)
 
     def _pki_operation(self, identity, identity_private_key, envelope, message_type, cacaps, ca_certs, transaction_id=None):
@@ -176,7 +177,7 @@ class Client:
             res = requests.post(self.url, params={'operation': 'PKIOperation', 'message': ''}, data=data, headers=headers)
         else:
             b64_bytes = base64.b64encode(data)
-            b64_string = b64_bytes.encode('ascii')
+            b64_string = b64_bytes.decode('utf-8')
             res = requests.get(self.url, params={'operation': 'PKIOperation', 'message': b64_string}, data=data, headers=headers)
 
         if res.status_code != 200:
