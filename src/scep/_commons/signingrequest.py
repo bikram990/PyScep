@@ -134,28 +134,7 @@ class SigningRequest:
 
     @classmethod
     def generate_pair(cls, type='rsa', size=2048):
-        if type == 'rsa':
-            private_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=size,
-                backend=default_backend(),
-            )
-        elif type == 'dsa':
-            private_key = dsa.generate_private_key(
-                key_size=size,
-                backend=default_backend()
-            )
-        elif type == 'ec':
-            private_key = ec.generate_private_key(curve=ec.SECP256R1)
-        else:
-            raise ValueError('Unsupported key type ' + type)
-
-        der = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        )
-        return PrivateKey.from_der(der)
+        return PrivateKey.generate_pair(type=type, size=size)
 
     @classmethod
     def generate_csr(cls, cn, key_usage, password=None, private_key=None):
@@ -259,6 +238,25 @@ class SigningRequest:
     @property
     def public_key(self):
         return PublicKey(public_key=self._csr[u'certification_request_info'][u'subject_pk_info'])
+
+    @property
+    def subject(self):
+        return self._csr[u'certification_request_info'][u'subject']
+
+    @property
+    def key_usage(self):
+        return [extension.native for extension in self.extensions
+                if extension.native[u'extn_id'] == 'key_usage'][0]
+
+    @property
+    def extensions(self):
+        return [usage for usage in self._csr[u'certification_request_info'][u'attributes']
+                if usage[u'type'].native == 'extension_request'][0][u'values'][0]
+
+    @property
+    def challenge_password(self):
+        return [usage for usage in self._csr[u'certification_request_info'][u'attributes']
+                if usage[u'type'].native == 'challenge_password'][0][u'values'][0].native
 
     def to_der(self):
         return self._csr.dump()

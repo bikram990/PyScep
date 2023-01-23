@@ -103,6 +103,11 @@ else:
 ca_certificate = client.rollover_certificate()
 ````
 
+### Server
+```commandline
+FLASK_DEBUG=true FLASK_APP=src.scep.server SCEPY_SETTINGS=$(pwd)/scepy.cfg flask run --host=0.0.0.0 --port=6081
+```
+
 ## Credits
 [SCEPy](https://github.com/mosen/SCEPy) for providing base implementation for this project
 

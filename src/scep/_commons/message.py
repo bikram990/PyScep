@@ -1,11 +1,11 @@
 import logging
 from base64 import b64encode
 from asn1crypto.cms import CMSAttribute, ContentInfo, IssuerAndSerialNumber
-from cryptography.hazmat.primitives.asymmetric import padding
 
 from .asn1 import SCEPCMSAttributeType
 
-from .cryptoutils import digest_for_data, decrypt, digest_function_for_type
+from .cryptoutils import digest_for_data, decrypt, digest_function_for_type, \
+    padding_for_encryption_algo
 
 from .enums import MessageType, PKIStatus
 from .certificate import Certificate
@@ -200,6 +200,22 @@ class SCEPMessage(object):
     def signed_data(self, value):
         self._signed_data = value
 
+    def encryption_info(self):
+        encap = self.encap_content_info
+        ct = encap['content_type'].native
+        logger.debug('content_type is {}'.format(ct))
+        recipient_info = encap['content']['recipient_infos'][0]
+
+        encryption_algo = recipient_info.chosen['key_encryption_algorithm'].native['algorithm']
+        encrypted_key = recipient_info.chosen['encrypted_key'].native
+
+        supported_algos = ['rsaes_pkcs1v15', 'rsassa_pkcs1v15', 'rsa', 'rsaes_oaep']
+        assert encryption_algo in supported_algos
+        padding = padding_for_encryption_algo(encryption_algo=encryption_algo)
+
+        logger.debug('Algo is ' + encryption_algo + ' Padding is ' + padding)
+        return encryption_algo, padding, encrypted_key
+
     def get_decrypted_envelope_data(self, certificate, key):
         """Decrypt the encrypted envelope data:
 
@@ -209,20 +225,7 @@ class SCEPMessage(object):
         at the moment this is RSA
         """
         encap = self.encap_content_info
-        ct = encap['content_type'].native
-        logger.debug('content_type is {}'.format(ct))
-        recipient_info = encap['content']['recipient_infos'][0]
-
-        encryption_algo = recipient_info.chosen['key_encryption_algorithm'].native
-        encrypted_key = recipient_info.chosen['encrypted_key'].native
-
-        supported_algos = ['rsaes_pkcs1v15', 'rsa']
-        assert encryption_algo['algorithm'] in supported_algos
-        if  encryption_algo['algorithm'] == 'rsa':
-            padding = 'pkcs'
-        elif encryption_algo['algorithm'] == 'rsaes_pkcs1v15':
-            padding = 'oaep'
-
+        encryption_algo, padding, encrypted_key = self.encryption_info()
         plain_key = key.decrypt(
             ciphertext=encrypted_key,
             padding_type=padding

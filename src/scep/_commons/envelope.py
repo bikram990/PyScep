@@ -37,11 +37,12 @@ class PKCSPKIEnvelopeBuilder(object):
     """
 
     def __init__(self):
+        self._key_encryption_algorithm = None
         self._data = None
         self._encryption_algorithm_id = None
         self._recipients = []
 
-    def encrypt(self, data, algorithm = None, keyEncAlg = None):
+    def encrypt(self, data, algorithm=None, key_enc_alg=None):
         """Set the data to be encrypted.
 
         The algorithm option is not yet available, and will default to 3DES-CBC.
@@ -49,6 +50,7 @@ class PKCSPKIEnvelopeBuilder(object):
         Args:
               data (bytes): The data to encrypt
               algorithm (str): RESERVED FOR FUTURE USE
+              key_enc_alg (str): encryption algo
         Returns:
               PKCSPKIEnvelopeBuilder
         """
@@ -62,22 +64,28 @@ class PKCSPKIEnvelopeBuilder(object):
         else:
             raise ValueError('Unrecognised encryption algorithm ', algorithm)
 
-        if keyEncAlg == 'rsaes_oaep' :
-            self._keyEncAlg = self._KeyEncryptionAlgorithm = KeyEncryptionAlgorithm(
-                    {
-                        'algorithm': KeyEncryptionAlgorithmId(u'rsaes_oaep'),
-                        'parameters': RSAESOAEPParams(
-                            {
-                                'hash_algorithm': DigestAlgorithm({'algorithm': DigestAlgorithmId('sha256')}),
-                                'mask_gen_algorithm': MaskGenAlgorithm({'algorithm': 'mgf1', 'parameters': {'algorithm': 'sha256'}})
-                            }
-                        )
-                    }
-                )
+        if key_enc_alg == 'rsaes_oaep':
+            self._key_encryption_algorithm = KeyEncryptionAlgorithm(
+                {
+                    'algorithm': KeyEncryptionAlgorithmId(u'rsaes_oaep'),
+                    'parameters': RSAESOAEPParams(
+                        {
+                            'hash_algorithm': DigestAlgorithm(
+                                {'algorithm': DigestAlgorithmId('sha256')}
+                            ),
+                            'mask_gen_algorithm': MaskGenAlgorithm(
+                                {'algorithm': 'mgf1', 'parameters': {'algorithm': 'sha256'}}
+                            )
+                        }
+                    )
+                }
+            )
+        elif key_enc_alg == 'rsa' or key_enc_alg == 'rsaes_pkcs1v15' or key_enc_alg == 'rsassa_pkcs1v15':
+            self._key_encryption_algorithm = KeyEncryptionAlgorithm(
+                {'algorithm': KeyEncryptionAlgorithmId(u'rsa')}
+            )
         else:
-            self._KeyEncryptionAlgorithm = KeyEncryptionAlgorithm(
-                    {'algorithm': KeyEncryptionAlgorithmId(u'rsa')}
-                    ) 
+            raise ValueError('Unsupported encryption algo ' + key_enc_alg)
         return self
 
     def add_recipient(self, certificate):
@@ -133,18 +141,21 @@ class PKCSPKIEnvelopeBuilder(object):
         Returns:
               RecipientInfo: Instance of ASN.1 data structure with required attributes and encrypted key.
         """
-        if self._KeyEncryptionAlgorithm.native['algorithm'] == 'rsaes_oaep':
+
+        encryption_algo = self._key_encryption_algorithm.native['algorithm']
+        if encryption_algo == 'rsaes_oaep':
             encrypted_symkey = recipient.public_key.encrypt(
                 plaintext=symmetric_key,
                 padding_type='oaep'
             )
-        elif self._KeyEncryptionAlgorithm.native['algorithm'] == 'rsa':
+        elif encryption_algo == 'rsa' or encryption_algo == 'rsaes_pkcs1v15' or encryption_algo == 'rsassa_pkcs1v15':
             encrypted_symkey = recipient.public_key.encrypt(
                 plaintext=symmetric_key,
                 padding_type='pkcs'
             )
         else:
-            raise ValueError('Key encription algorithm not supported: %s' % self._KeyEncryptionAlgorithm.native['algorithm'])
+            raise ValueError('Key encription algorithm not supported: %s' % encryption_algo)
+
         asn1cert = recipient.to_asn1_certificate()
         ias = IssuerAndSerialNumber({
             'issuer': asn1cert.issuer,
@@ -154,7 +165,7 @@ class PKCSPKIEnvelopeBuilder(object):
         ri = RecipientInfo('ktri', KeyTransRecipientInfo({
             'version': 0,
             'rid': RecipientIdentifier('issuer_and_serial_number', ias),
-            'key_encryption_algorithm': self._KeyEncryptionAlgorithm,
+            'key_encryption_algorithm': self._key_encryption_algorithm,
             'encrypted_key': encrypted_symkey,
         }))
 

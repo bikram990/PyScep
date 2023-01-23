@@ -13,8 +13,6 @@ from asn1crypto.algos import DigestAlgorithm, SignedDigestAlgorithm, SignedDiges
 from .cryptoutils import digest_for_data
 from .enums import MessageType, PKIStatus, FailInfo
 from .asn1 import SCEPCMSAttributeType
-from .certificate import Certificate
-
 
 CMSAttribute._fields = [
     ('type', SCEPCMSAttributeType),
