@@ -86,7 +86,8 @@ class Certificate:
     def key_usage(self):
         if self._certificate.key_usage_value is not None:
             return self._certificate.key_usage_value.native
-        return None
+        # this change is needed for chrome scep consumer
+        return []
 
     @property
     def is_ca(self):
