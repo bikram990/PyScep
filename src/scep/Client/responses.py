@@ -150,9 +150,14 @@ class CACertificates:
     def _filter(self, required_key_usage, not_required_key_usage, ca_only=False):
         matching_certificates = list()
         for cert in self._certificates:
-            if (bool(cert.is_ca) != ca_only) or \
-                    (required_key_usage.intersection(cert.key_usage) != required_key_usage) or \
-                    (not_required_key_usage.difference(cert.key_usage) != not_required_key_usage):
+            if bool(cert.is_ca) != ca_only:
+                continue
+
+            # Having the key_usage field can be optional.
+            # ref: https://security.stackexchange.com/questions/68491/recommended-key-usage-for-a-client-certificate
+            # ref: https://docs.digicert.com/en/trust-lifecycle-manager/certificates/certificate-attributes-and-extensions/key-usage.html
+            if cert.key_usage and (required_key_usage.intersection(cert.key_usage) != required_key_usage or
+                                   not_required_key_usage.difference(cert.key_usage) != not_required_key_usage):
                 continue
 
             matching_certificates.append(cert)

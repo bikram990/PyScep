@@ -84,7 +84,12 @@ class Certificate:
 
     @property
     def key_usage(self):
-        return self._certificate.key_usage_value.native
+        # Having the key_usage field can be optional.
+        # ref: https://security.stackexchange.com/questions/68491/recommended-key-usage-for-a-client-certificate
+        # ref: https://docs.digicert.com/en/trust-lifecycle-manager/certificates/certificate-attributes-and-extensions/key-usage.html
+        if self._certificate.key_usage_value:
+            return self._certificate.key_usage_value.native
+        return None
 
     @property
     def is_ca(self):
