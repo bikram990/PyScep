@@ -20,9 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class Client:
-    def __init__(self, url):
+    def __init__(self, url, timeout=60*1):
         self.url = url
         self.reverse_cacaps = dict([(cap.value.lower(), cap) for cap in CACaps])
+        self.TIMEOUT = timeout
 
     def get_ca_capabilities(self, identifier=None):
         """Query the SCEP Service for its capabilities."""
@@ -30,7 +31,7 @@ class Client:
         if identifier is not None:
             message = identifier
 
-        res = requests.get(self.url, params={'operation': 'GetCACaps', 'message': message})
+        res = requests.get(self.url, params={'operation': 'GetCACaps', 'message': message},timeout=self.TIMEOUT)
         if res.status_code != 200:
             raise ValueError('Got invalid status code for GetCACaps: {}'.format(res.status_code))
         caps = [cap.strip().lower() for cap in res.text.splitlines() if cap.strip()]
@@ -45,7 +46,7 @@ class Client:
         if identifier is not None:
             message = identifier
 
-        res = requests.get(self.url, params={'operation': 'GetCACert', 'message': message})
+        res = requests.get(self.url, params={'operation': 'GetCACert', 'message': message}, timeout=self.TIMEOUT)
         if res.status_code != 200:
             raise ValueError('Got invalid status code for GetCACert: {}'.format(res.status_code))
         if res.headers['content-type'] == 'application/x-x509-ca-cert':  # we dont support RA cert yet
@@ -73,7 +74,7 @@ class Client:
         #FIXME: ensure that the response is signed by the ca cert received in the get_ca_certs
         ca_certs = self.get_ca_certs(identifier=message)
 
-        res = requests.get(self.url, params={'operation': 'GetNextCACert', 'message': message})
+        res = requests.get(self.url, params={'operation': 'GetNextCACert', 'message': message}, timeout=self.TIMEOUT)
         if res.status_code != 200:
             raise ValueError('Got invalid status code for GetCACert: {}'.format(res.status_code))
         assert res.headers['content-type'] == 'application/x-x509-next-ca-cert'
@@ -173,11 +174,11 @@ class Client:
         """Perform a PKIOperation using the CMS data given."""
         headers = {'content-type': 'application/x-pki-message'}
         if cacaps.contains(CACaps.POSTPKIOperation):
-            res = requests.post(self.url, params={'operation': 'PKIOperation', 'message': ''}, data=data, headers=headers)
+            res = requests.post(self.url, params={'operation': 'PKIOperation', 'message': ''}, data=data, headers=headers, timeout=60 * 1)
         else:
             b64_bytes = base64.b64encode(data)
             b64_string = b64_bytes.encode('ascii')
-            res = requests.get(self.url, params={'operation': 'PKIOperation', 'message': b64_string}, data=data, headers=headers)
+            res = requests.get(self.url, params={'operation': 'PKIOperation', 'message': b64_string}, data=data, headers=headers, timeout=60 * 1)
 
         if res.status_code != 200:
             raise ValueError('Got invalid status code for PKIOperation: {}'.format(res.status_code))

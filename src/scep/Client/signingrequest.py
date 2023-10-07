@@ -158,14 +158,23 @@ class SigningRequest:
         return PrivateKey.from_der(der)
 
     @classmethod
-    def generate_csr(cls, cn, key_usage, password=None, private_key=None):
+    def generate_csr(cls, cn, key_usage, password=None, private_key=None, organization_name=None, country_name=None, org_unit_name=None):
         if private_key is None:
             private_key = cls.generate_pair()
+            
+        csr_subject = {
+            u'common_name': six.text_type(cn),
+        }
+        
+        if organization_name:
+            csr_subject[u'organization_name'] = six.text_type(organization_name)
+        if country_name:
+            csr_subject[u'country_name'] = six.text_type(country_name)
+        if org_unit_name:
+            csr_subject[u'organizational_unit_name'] = six.text_type(org_unit_name)
 
         builder = ScepCSRBuilder(
-            {
-                u'common_name': six.text_type(cn),
-            },
+            csr_subject,
             private_key.public_key.to_asn1_public_key()
         )
         builder.key_usage = key_usage #[u'digital_signature', u'key_encipherment']
