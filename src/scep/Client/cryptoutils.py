@@ -35,7 +35,7 @@ def hex_digest_for_data(algorithm, data):
     return digest_function(data).hexdigest()
 
 
-def padding_for_type(padding_type, hash_algo=hashes.SHA256, mgf=padding.MGF1, label=None):
+def padding_for_type(padding_type, hash_algo=hashes.SHA256(), mgf=padding.MGF1, label=None):
     if padding_type == 'pkcs':
         return padding.PKCS1v15()
     elif padding_type == 'pss':
